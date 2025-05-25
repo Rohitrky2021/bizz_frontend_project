@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Product Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.4/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <header class="pb-1">
+        <h1
+            class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent text-center mb-4 drop-shadow-lg">
+            Advanced Product Gallery</h1>
+
+        <div class="filters-container">
+            <div class="filters flex flex-wrap items-end justify-between gap-4 p-4 bg-gray-50 rounded-lg shadow-sm">
+                <!-- Left side filters -->
+                <div class="flex flex-wrap gap-4 flex-1">
+                    <div class="filter-group min-w-32">
+                        <label for="categoryFilter"
+                            class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select id="categoryFilter" data-testid="category-filter"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Categories</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="books">Books</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group min-w-48">
+                        <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <input type="text" id="searchInput" placeholder="Search products..." data-testid="search-input"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="filter-group min-w-32">
+                        <label for="priceRange" class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                        <div class="price-range flex items-center gap-2">
+                            <input type="range" id="priceRange" min="0" max="1500" value="1500"
+                                data-testid="price-range" class="flex-1">
+                            <span id="priceValue" class="text-sm font-medium text-gray-600 min-w-12">$1500</span>
+                        </div>
+                    </div>
+
+                    <div class="filter-group min-w-32">
+                        <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                        <div class="sort-controls flex gap-1">
+                            <select id="sortBy" data-testid="sort-by"
+                                class="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="price">Price</option>
+                                <option value="rating">Rating</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <button id="sortOrder" data-testid="sort-order"
+                                class="px-3 py-2 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <i class="fas fa-sort-amount-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right side view controls -->
+                <div class="view-controls flex gap-1">
+                    <button id="gridView"
+                        class="active px-4 py-2 bg-blue-600 text-gray-700 rounded-l-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+                        data-testid="grid-view">
+                        <i class="fas fa-th"></i>
+                        <span class="hidden sm:inline">Grid</span>
+                    </button>
+                    <button id="listView"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-r-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+                        data-testid="list-view">
+                        <i class="fas fa-list"></i>
+                        <span class="hidden sm:inline">List</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+    <main>
+        <button id="mobileFilterToggle" class="mobile-filter-toggle" data-testid="mobile-filter-toggle">
+            <i class="fas fa-sliders-h"></i> Filters
+        </button>
+        <button id="chatbotToggle" class="mobile-filter-toggle" data-testid="chatbot-toggle">
+            <i class="fas fa-comment"></i> Chat with Assistant
+        </button>
+
+        <div class="wishlist-bar">
+            <button id="wishlistToggle" data-testid="wishlist-toggle">
+                <i class="fas fa-heart"></i>
+                <span id="wishlistCount">0</span>
+            </button>
+        </div>
+
+        <div id="productGrid" class="product-grid" data-testid="product-grid">
+            <!-- Products will be dynamically inserted here -->
+        </div>
+
+        <!-- Floating Compare Button -->
+        <div id="compareFloatBtn" class="compare-float-btn">
+            Compare (<span id="compareCount">0</span>)
+        </div>
+
+        <!-- Modals -->
+        <div id="comparisonModal" class="modal" data-testid="comparison-modal">
+            <div class="modal-content">
+                <h2>Compare Products</h2>
+                <div id="comparisonContainer"></div>
+                <button class="close-modal">Close</button>
+            </div>
+        </div>
+
+        <div id="productDetailsModal" class="modal" data-testid="product-details-modal">
+            <div class="modal-content">
+                <div id="productDetailsContainer" class="product-details-container"></div>
+                <button class="close-modal">Close</button>
+            </div>
+        </div>
+
+        <div id="recommendationsModal" class="modal" data-testid="recommendations-modal">
+            <div class="modal-content">
+                <h2>Recommended Products</h2>
+                <div id="recommendationsContainer" class="recommendations-grid"></div>
+                <button class="close-modal">Close</button>
+            </div>
+        </div>
+
+        <div id="wishlistModal" class="modal" data-testid="wishlist-modal">
+            <div class="modal-content">
+                <h2><i class="fas fa-heart text-red-500"></i> My Wishlist</h2>
+                <div id="wishlistContainer" class="wishlist-grid">
+                    <!-- Wishlist items will be displayed here -->
+                </div>
+                <div class="wishlist-actions">
+                    <button id="clearWishlist" class="btn-secondary">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                    <button id="shareWishlist" class="btn-primary">
+                        <i class="fas fa-share"></i> Share Wishlist
+                    </button>
+                </div>
+                <button class="close-modal">Close</button>
+            </div>
+        </div>
+
+        <div id="chatbotModal" class="modal" data-testid="chatbot-modal">
+            <div class="modal-content">
+                <h2>Product Assistant</h2>
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input-group">
+                    <input type="text" id="chatInput" placeholder="Ask about products..." data-testid="chat-input">
+                    <button id="chatSubmit">Send</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Advanced Product Gallery Challenge - Enhanced Version</p>
+        <a href="/privacy-policy" class="privacy-link">Privacy Policy</a>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
