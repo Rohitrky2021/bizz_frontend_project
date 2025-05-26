@@ -715,6 +715,12 @@ function setupEventListeners() {
     elements.filters.classList.toggle("active");
   });
 
+  // Wishlist Events
+  elements.wishlistToggle.addEventListener('click', showWishlistModal);
+  document.getElementById('clearWishlist').addEventListener('click', clearWishlist);
+  document.getElementById('shareWishlist').addEventListener('click', shareWishlist);
+  
+
   // Product Card Events
   elements.productGrid.addEventListener("click", e => {
     const target = e.target.closest("[data-id]");
@@ -820,6 +826,38 @@ function createWishlistItem(product) {
     `;
   return item;
 }
+
+function clearWishlist() {
+  if (state.wishlist.size === 0 || !confirm('Are you sure you want to clear your wishlist?')) return;
+  state.wishlist.clear();
+  elements.wishlistCount.textContent = '0';
+  showWishlistModal();
+  showToast('Wishlist cleared');
+}
+
+function shareWishlist() {
+  if (state.wishlist.size === 0) {
+    showToast('Your wishlist is empty');
+    return;
+  }
+  
+  const shareData = {
+    title: 'My Wishlist',
+    text: `My Wishlist:\n${Array.from(state.wishlist)
+      .map(id => {
+        const p = products.find(p => p.id === id);
+        return `- ${p.title} ($${p.price.toFixed(2)})`;
+      }).join('\n')}`,
+    url: window.location.href
+  };
+
+  if (navigator.share) {
+    navigator.share(shareData).catch(() => copyToClipboard(shareData.text));
+  } else {
+    copyToClipboard(shareData.text);
+  }
+}
+
 
 // Recommendations Functions
 function showRecommendationsModal() {
