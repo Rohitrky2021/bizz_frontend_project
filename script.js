@@ -1,4 +1,6 @@
-// Enhanced Product Gallery JavaScript
+// main.js
+// import { products } from './products';
+
 const products = [
   {
     id: 1,
@@ -165,7 +167,6 @@ const products = [
     ],
   },
 }));
-
 // State Management
 const state = {
   filters: {
@@ -208,8 +209,8 @@ const elements = {
   cartTotal: document.getElementById("cartTotal"),
   clearCart: document.getElementById("clearCart"),
   checkoutBtn: document.getElementById("checkoutBtn"),
-  cartToggle: document.getElementById("cartToggle"), // Make sure you have this in your HTML
-  cartCount: document.getElementById("cartCount"), // Make sure you have this in your HTML
+  cartToggle: document.getElementById("cartToggle"),
+  cartCount: document.getElementById("cartCount"),
 };
 
 // Initialize Application
@@ -252,57 +253,48 @@ function createProductCard(product) {
   const isLowStock = product.stock < 10;
 
   card.innerHTML = `
-        <div class="product-image-container">
-            <img src="${product.image}" alt="${
-    product.title
-  }" class="product-image">
-            
-            <!-- Stock Badge -->
-            <div class="stock-badge ${isLowStock ? "low-stock" : ""}">
-                ${product.stock} left
-            </div>
-            
-            <!-- Hover Actions -->
-            <div class="hover-actions">
-                <button class="quick-view-btn" data-id="${product.id}">
-                    <i class="fas fa-eye"></i> Quick View
-                </button>
-                <button class="wishlist-btn ${
-                  isInWishlist ? "active" : ""
-                }" data-id="${product.id}">
-                    <i class="${isInWishlist ? "fas" : "far"} fa-heart"></i> 
-                    ${isInWishlist ? "In Wishlist" : "Add to Wishlist"}
-                </button>
-            </div>
-        </div>
-        
-        <div class="product-content">
-            <h3 class="product-title">${product.title}</h3>
-            <div class="product-price">$${product.price.toFixed(2)}</div>
-            <div class="product-rating">
-                ${generateStarRating(averageRating)}
-                <span>(${product.ratings.length})</span>
-            </div>
-            <div class="product-category">${product.category}</div>
-            <div class="product-actions">
-                <button class="compare-button ${
-                  isInComparison ? "active" : ""
-                }" data-id="${product.id}">
-                    <i class="fas fa-${
-                      isInComparison ? "check" : "exchange-alt"
-                    }"></i> 
-                    ${
-                      isInComparison
-                        ? `Added (${state.comparison.size}/${state.maxComparisonItems})`
-                        : "Compare"
-                    }
-                </button>
-                <button class="add-to-cart" data-id="${product.id}">
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                </button>
-            </div>
-        </div>
-    `;
+    <div class="product-image-container">
+      <img src="${product.image}" alt="${product.title}" class="product-image">
+      <div class="stock-badge ${isLowStock ? "low-stock" : ""}">
+        ${product.stock} left
+      </div>
+      <div class="hover-actions">
+        <button class="quick-view-btn" data-id="${product.id}">
+          <i class="fas fa-eye"></i> Quick View
+        </button>
+        <button class="wishlist-btn ${isInWishlist ? "active" : ""}" data-id="${
+    product.id
+  }">
+          <i class="${isInWishlist ? "fas" : "far"} fa-heart"></i> 
+          ${isInWishlist ? "In Wishlist" : "Add to Wishlist"}
+        </button>
+      </div>
+    </div>
+    <div class="product-content">
+      <h3 class="product-title">${product.title}</h3>
+      <div class="product-price">$${product.price.toFixed(2)}</div>
+      <div class="product-rating">
+        ${generateStarRating(averageRating)}
+        <span>(${product.ratings.length})</span>
+      </div>
+      <div class="product-category">${product.category}</div>
+      <div class="product-actions">
+        <button class="compare-button ${
+          isInComparison ? "active" : ""
+        }" data-id="${product.id}">
+          <i class="fas fa-${isInComparison ? "check" : "exchange-alt"}"></i> 
+          ${
+            isInComparison
+              ? `Added (${state.comparison.size}/${state.maxComparisonItems})`
+              : "Compare"
+          }
+        </button>
+        <button class="add-to-cart" data-id="${product.id}">
+          <i class="fas fa-shopping-cart"></i> Add to Cart
+        </button>
+      </div>
+    </div>
+  `;
 
   return card;
 }
@@ -377,9 +369,9 @@ function showToast(message) {
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.innerHTML = `
-        <i class="fas fa-check-circle"></i>
-        <span>${message}</span>
-    `;
+    <i class="fas fa-check-circle"></i>
+    <span>${message}</span>
+  `;
   document.body.appendChild(toast);
 
   setTimeout(() => {
@@ -409,9 +401,9 @@ function updateWishlistButtons(productId) {
       const isInWishlist = state.wishlist.has(productId);
       btn.classList.toggle("active", isInWishlist);
       btn.innerHTML = `
-            <i class="${isInWishlist ? "fas" : "far"} fa-heart"></i> 
-            ${isInWishlist ? "In Wishlist" : "Add to Wishlist"}
-        `;
+        <i class="${isInWishlist ? "fas" : "far"} fa-heart"></i> 
+        ${isInWishlist ? "In Wishlist" : "Add to Wishlist"}
+      `;
     });
 }
 
@@ -439,13 +431,13 @@ function updateComparisonUI() {
 
     btn.classList.toggle("active", isInComparison);
     btn.innerHTML = `
-            <i class="fas fa-${isInComparison ? "check" : "exchange-alt"}"></i> 
-            ${
-              isInComparison
-                ? `Added (${state.comparison.size}/${state.maxComparisonItems})`
-                : "Compare"
-            }
-        `;
+      <i class="fas fa-${isInComparison ? "check" : "exchange-alt"}"></i> 
+      ${
+        isInComparison
+          ? `Added (${state.comparison.size}/${state.maxComparisonItems})`
+          : "Compare"
+      }
+    `;
   });
 
   elements.compareCount.textContent = state.comparison.size;
@@ -477,119 +469,107 @@ function generateComparisonTable(products) {
   });
 
   return `
-        <table class="comparison-table">
-            <thead>
-                <tr>
-                    <th>Feature</th>
-                    ${products.map(p => `<th>${p.title}</th>`).join("")}
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Price</td>
-                    ${products
-                      .map(p => `<td>$${p.price.toFixed(2)}</td>`)
-                      .join("")}
-                </tr>
-                <tr>
-                    <td>Rating</td>
-                    ${products
-                      .map(
-                        p => `
-                        <td>
-                            ${generateStarRating(
-                              calculateAverageRating(p.ratings)
-                            )}
-                            (${p.ratings.length})
-                        </td>
-                    `
-                      )
-                      .join("")}
-                </tr>
-                ${Array.from(allSpecs)
-                  .map(
-                    spec => `
-                    <tr>
-                        <td>${spec}</td>
-                        ${products
-                          .map(
-                            p => `
-                            <td>${p.specifications[spec] || "N/A"}</td>
-                        `
-                          )
-                          .join("")}
-                    </tr>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          ${products.map(p => `<th>${p.title}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Price</td>
+          ${products.map(p => `<td>$${p.price.toFixed(2)}</td>`).join("")}
+        </tr>
+        <tr>
+          <td>Rating</td>
+          ${products
+            .map(
+              p => `
+              <td>
+                ${generateStarRating(calculateAverageRating(p.ratings))}
+                (${p.ratings.length})
+              </td>
+            `
+            )
+            .join("")}
+        </tr>
+        ${Array.from(allSpecs)
+          .map(
+            spec => `
+            <tr>
+              <td>${spec}</td>
+              ${products
+                .map(
+                  p => `
+                  <td>${p.specifications[spec] || "N/A"}</td>
                 `
-                  )
-                  .join("")}
-            </tbody>
-        </table>
-    `;
+                )
+                .join("")}
+            </tr>
+          `
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 // Product Details Modal
 function showProductDetails(product) {
   const modal = document.getElementById("productDetailsModal");
   const container = document.getElementById("productDetailsContainer");
-  console.log("hello");
-  trackProductView(product); // Track product view
+  trackProductView(product);
 
   container.innerHTML = `
-        <div class="product-details-image">
-            <img src="${product.image}" alt="${product.title}">
-        </div>
-        <div class="product-details-info">
-            <h3>${product.title}</h3>
-            <div class="price">$${product.price.toFixed(2)}</div>
-            <div class="rating">
-                ${generateStarRating(calculateAverageRating(product.ratings))} 
-                (${product.ratings.length} reviews)
-            </div>
-            <p class="description">${
-              product.description || "No description available."
-            }</p>
-            
-            <div class="specifications">
-                <h4>Specifications</h4>
-                <ul>
-                    ${Object.entries(product.specifications)
-                      .map(
-                        ([key, value]) =>
-                          `<li><strong>${key}:</strong> ${value}</li>`
-                      )
-                      .join("")}
-                </ul>
-            </div>
-            
-            ${
-              product.variants
-                ? `
-                <div class="variants">
-                    <h4>Variants</h4>
-                    <div class="variant-options">
-                        ${product.variants
-                          .map(
-                            variant => `
-                            <div class="variant">
-                                <div>Color: ${variant.color}</div>
-                                <div>Size: ${variant.size}</div>
-                                <div>Price: $${variant.price.toFixed(2)}</div>
-                            </div>
-                        `
-                          )
-                          .join("")}
-                    </div>
+    <div class="product-details-image">
+      <img src="${product.image}" alt="${product.title}">
+    </div>
+    <div class="product-details-info">
+      <h3>${product.title}</h3>
+      <div class="price">$${product.price.toFixed(2)}</div>
+      <div class="rating">
+        ${generateStarRating(calculateAverageRating(product.ratings))} 
+        (${product.ratings.length} reviews)
+      </div>
+      <p class="description">${
+        product.description || "No description available."
+      }</p>
+      <div class="specifications">
+        <h4>Specifications</h4>
+        <ul>
+          ${Object.entries(product.specifications)
+            .map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`)
+            .join("")}
+        </ul>
+      </div>
+      ${
+        product.variants
+          ? `
+        <div class="variants">
+          <h4>Variants</h4>
+          <div class="variant-options">
+            ${product.variants
+              .map(
+                variant => `
+                <div class="variant">
+                  <div>Color: ${variant.color}</div>
+                  <div>Size: ${variant.size}</div>
+                  <div>Price: $${variant.price.toFixed(2)}</div>
                 </div>
-            `
-                : ""
-            }
-            
-            <button class="add-to-cart" data-id="${product.id}">
-                <i class="fas fa-shopping-cart"></i> Add to Cart
-            </button>
+              `
+              )
+              .join("")}
+          </div>
         </div>
-    `;
-  console.log(container);
+      `
+          : ""
+      }
+      <button class="add-to-cart" data-id="${product.id}">
+        <i class="fas fa-shopping-cart"></i> Add to Cart
+      </button>
+    </div>
+  `;
 
   modal.classList.add("active");
 }
@@ -602,6 +582,7 @@ function initializeChatbot() {
   const chatSubmit = document.getElementById("chatSubmit");
   const chatMessages = document.getElementById("chatMessages");
 
+  // Toggle chatbot modal
   chatbotToggle.addEventListener("click", () => {
     chatbotModal.classList.toggle("active");
     if (chatbotModal.classList.contains("active")) {
@@ -609,50 +590,129 @@ function initializeChatbot() {
     }
   });
 
-  function addChatMessage(text, sender) {
+  // Handle chat submission
+  chatSubmit.addEventListener("click", () => processChatInput());
+  chatInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") processChatInput();
+  });
+
+  function processChatInput() {
+    const query = chatInput.value.trim();
+    if (!query) {
+      addChatMessage("Please enter a query.", "bot");
+      return;
+    }
+
+    addChatMessage(query, "user");
+    const recommendations = getChatRecommendations(query);
+
+    if (recommendations.length) {
+      addChatMessage("Here are some products I recommend:", "bot");
+      recommendations.forEach(product => {
+        addChatMessage(
+          `<div class="chat-product" data-id="${product.id}">
+                        <img src="${product.image}" alt="${product.title}">
+                        <div class="chat-product-info">
+                            <span>${product.title} - $${product.price.toFixed(
+            2
+          )}</span>
+                            <div class="chat-product-actions">
+                                <button class="add-to-cart" data-id="${
+                                  product.id
+                                }">
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                                </button>
+                                <button class="wishlist-btn ${
+                                  state.wishlist.has(product.id) ? "active" : ""
+                                }" data-id="${product.id}">
+                                    <i class="${
+                                      state.wishlist.has(product.id)
+                                        ? "fas"
+                                        : "far"
+                                    } fa-heart"></i>
+                                    ${
+                                      state.wishlist.has(product.id)
+                                        ? "In Wishlist"
+                                        : "Add to Wishlist"
+                                    }
+                                </button>
+                                <button class="quick-view-btn" data-id="${
+                                  product.id
+                                }">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>`,
+          "bot"
+        );
+      });
+    } else {
+      addChatMessage(
+        'Sorry, I couldn’t find any products matching your request. Try something like "electronics under $200" or "books for programming".',
+        "bot"
+      );
+    }
+    chatInput.value = "";
+  }
+
+  function addChatMessage(message, sender) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `chat-message ${sender}`;
-    messageDiv.innerHTML = text;
+    messageDiv.innerHTML = message;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  function processMessage() {
-    const message = chatInput.value.trim();
-    if (!message) return;
+  function getChatRecommendations(query) {
+    const lowerQuery = query.toLowerCase();
+    const priceMatch = lowerQuery.match(/under \$?(\d+)/);
+    const maxPrice = priceMatch ? parseFloat(priceMatch[1]) : Infinity;
+    const categories = ["electronics", "clothing", "books"];
+    const category = categories.find(cat => lowerQuery.includes(cat)) || "all";
+    const keywords = lowerQuery
+      .split(" ")
+      .filter(word => !["under", "for", "a", "in", "show", "me"].includes(word))
+      .map(word => word.replace(/s$/, "")); // Remove plural forms for better matching
 
-    addChatMessage(message, "user");
-    chatInput.value = "";
+    let filteredProducts = products;
 
-    // Simple bot response
-    setTimeout(() => {
-      const responses = [
-        "I can help you find products. Try asking about specific categories or price ranges.",
-        "We have great deals on electronics right now. Would you like to see them?",
-        "How can I assist you with your product search today?",
-        "You might like our new arrivals. Shall I show you some recommendations?",
-      ];
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-      addChatMessage(randomResponse, "bot");
-    }, 1000);
+    // Filter by category
+    if (category !== "all") {
+      filteredProducts = filteredProducts.filter(p => p.category === category);
+    }
+
+    // Filter by price
+    filteredProducts = filteredProducts.filter(p => p.price <= maxPrice);
+
+    // Filter by keywords in title or category
+    filteredProducts = filteredProducts.filter(p =>
+      keywords.some(
+        keyword =>
+          p.title.toLowerCase().includes(keyword) ||
+          p.category.toLowerCase().includes(keyword)
+      )
+    );
+
+    // Sort by relevance (rating and price)
+    filteredProducts.sort((a, b) => {
+      const aScore = calculateAverageRating(a.ratings);
+      const bScore = calculateAverageRating(b.ratings);
+      return bScore - aScore || a.price - b.price; // Higher rating first, then lower price
+    });
+
+    return filteredProducts.slice(0, 3); // Return top 3 matches
   }
-
-  chatSubmit.addEventListener("click", processMessage);
-  chatInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") processMessage();
-  });
 
   // Initial greeting
   addChatMessage(
-    "Hello! I'm your product assistant. How can I help you today?",
+    'Hello! I\'m your shopping assistant. Ask me about products, like "show me electronics under $200" or "programming books".',
     "bot"
   );
 }
 
 // Event Listeners
 function setupEventListeners() {
-  // Filter Events
   elements.categoryFilter.addEventListener("change", () => {
     state.filters.category = elements.categoryFilter.value;
     renderProducts(products);
@@ -672,7 +732,6 @@ function setupEventListeners() {
     renderProducts(products);
   });
 
-  // Sort Events
   elements.sortBy.addEventListener("change", () => {
     state.filters.sortBy = elements.sortBy.value;
     renderProducts(products);
@@ -688,23 +747,19 @@ function setupEventListeners() {
     renderProducts(products);
   });
 
-  // Add to your setupEventListeners function
   document.querySelectorAll(".modal").forEach(modal => {
     modal.addEventListener("click", e => {
       if (e.target === modal || e.target.classList.contains("close-modal")) {
         modal.classList.remove("active");
 
-        // Special handling for wishlist modal
         if (modal.id === "wishlistModal") {
-          renderProducts(products); // Refresh main grid
+          renderProducts(products);
         }
       }
     });
   });
 
-  // Add to your setupEventListeners function
   elements.wishlistToggle.addEventListener("click", showWishlistModal);
-
   elements.cartToggle.addEventListener("click", showCartModal);
   elements.clearCart.addEventListener("click", clearCart);
   elements.checkoutBtn.addEventListener("click", () => {
@@ -713,10 +768,8 @@ function setupEventListeners() {
       return;
     }
     showToast("Proceeding to checkout");
-    // Here you would typically redirect to a checkout page
   });
 
-  // View Mode Events
   elements.gridView.addEventListener("click", () => {
     state.viewMode = "grid";
     elements.gridView.classList.add("active");
@@ -733,12 +786,10 @@ function setupEventListeners() {
     elements.productGrid.classList.add("list-view");
   });
 
-  // Mobile Filter Toggle
   elements.mobileFilterToggle.addEventListener("click", () => {
     elements.filters.classList.toggle("active");
   });
 
-  // Wishlist Events
   elements.wishlistToggle.addEventListener("click", showWishlistModal);
   document
     .getElementById("clearWishlist")
@@ -747,7 +798,6 @@ function setupEventListeners() {
     .getElementById("shareWishlist")
     .addEventListener("click", shareWishlist);
 
-  // Product Card Events - Modified to handle modal clicks
   document.addEventListener("click", e => {
     const target = e.target.closest("[data-id]");
     if (!target) return;
@@ -759,13 +809,12 @@ function setupEventListeners() {
       toggleWishlist(productId);
     } else if (target.classList.contains("remove-wishlist")) {
       toggleWishlist(productId);
-      showWishlistModal(); // Refresh the modal
+      showWishlistModal();
     } else if (target.classList.contains("compare-button")) {
       toggleComparison(productId);
     } else if (target.classList.contains("quick-view-btn")) {
       showProductDetails(product);
     } else if (target.classList.contains("add-to-cart")) {
-      // This will now work for both grid and modal add-to-cart buttons
       addToCart(product);
       showToast(`${product.title} added to cart`);
     }
@@ -782,10 +831,8 @@ function setupEventListeners() {
     }
   });
 
-  // Compare Float Button
   elements.compareFloatBtn.addEventListener("click", showComparisonModal);
 
-  // Close Modals
   document.querySelectorAll(".modal").forEach(modal => {
     modal.addEventListener("click", e => {
       if (e.target === modal || e.target.classList.contains("close-modal")) {
@@ -794,7 +841,6 @@ function setupEventListeners() {
     });
   });
 
-  // Close Modals with ESC
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
       document.querySelectorAll(".modal.active").forEach(modal => {
@@ -815,7 +861,6 @@ function updateCartUI() {
 }
 
 function addToCart(product) {
-  // Check if product already exists in cart
   const existingItem = state.cart.find(item => item.id === product.id);
 
   if (existingItem) {
@@ -839,9 +884,6 @@ function debounce(func, wait) {
   };
 }
 
-// Initialize the app when DOM is loaded
-document.addEventListener("DOMContentLoaded", init);
-
 // Wishlist Functions
 function showWishlistModal() {
   const modal = document.getElementById("wishlistModal");
@@ -853,12 +895,12 @@ function showWishlistModal() {
 
   if (wishlistProducts.length === 0) {
     container.innerHTML = `
-            <div class="empty-state">
-                <i class="far fa-heart"></i>
-                <h3>Your wishlist is empty</h3>
-                <p>Add products to your wishlist to see them here</p>
-            </div>
-        `;
+      <div class="empty-state">
+        <i class="far fa-heart"></i>
+        <h3>Your wishlist is empty</h3>
+        <p>Add products to your wishlist to see them here</p>
+      </div>
+    `;
   } else {
     container.innerHTML = "";
     wishlistProducts.forEach(product => {
@@ -873,20 +915,20 @@ function createWishlistItem(product) {
   const item = document.createElement("div");
   item.className = "wishlist-item";
   item.innerHTML = `
-        <div class="wishlist-item-image">
-            <img src="${product.image}" alt="${product.title}">
-            <button class="remove-wishlist" data-id="${product.id}">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="wishlist-item-info">
-            <h4>${product.title}</h4>
-            <div class="price">$${product.price.toFixed(2)}</div>
-            <button class="add-to-cart" data-id="${product.id}">
-                <i class="fas fa-shopping-cart"></i> Add to Cart
-            </button>
-        </div>
-    `;
+    <div class="wishlist-item-image">
+      <img src="${product.image}" alt="${product.title}">
+      <button class="remove-wishlist" data-id="${product.id}">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="wishlist-item-info">
+      <h4>${product.title}</h4>
+      <div class="price">$${product.price.toFixed(2)}</div>
+      <button class="add-to-cart" data-id="${product.id}">
+        <i class="fas fa-shopping-cart"></i> Add to Cart
+      </button>
+    </div>
+  `;
   return item;
 }
 
@@ -984,7 +1026,7 @@ function updateCartSummary() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = subtotal > 100 ? 0 : 9.99; // Free shipping over $100
+  const shipping = subtotal > 100 ? 0 : 9.99;
   const total = subtotal + shipping;
 
   elements.cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
@@ -1061,12 +1103,12 @@ function showRecommendationsModal() {
 
   if (recommendations.length === 0) {
     container.innerHTML = `
-            <div class="empty-state">
-                <i class="far fa-star"></i>
-                <h3>No recommendations yet</h3>
-                <p>View more products to get personalized recommendations</p>
-            </div>
-        `;
+      <div class="empty-state">
+        <i class="far fa-star"></i>
+        <h3>No recommendations yet</h3>
+        <p>View more products to get personalized recommendations</p>
+      </div>
+    `;
   } else {
     container.innerHTML = "";
     recommendations.forEach(product => {
@@ -1079,24 +1121,23 @@ function showRecommendationsModal() {
 
 function getRecommendations() {
   if (state.viewedProducts.length === 0) {
-    return products.slice(0, 4); // Fallback to first 4 products
+    return products.slice(0, 4);
   }
 
-  // Simple recommendation logic - products from same category
   const lastViewed = state.viewedProducts[state.viewedProducts.length - 1];
   return products
     .filter(p => p.category === lastViewed.category && p.id !== lastViewed.id)
     .slice(0, 4);
 }
 
-// track product views (like in showProductDetails)
 function trackProductView(product) {
-  // Avoid duplicates
   if (!state.viewedProducts.some(p => p.id === product.id)) {
     state.viewedProducts.push(product);
-    // Keep only last 5 viewed products
     if (state.viewedProducts.length > 5) {
       state.viewedProducts.shift();
     }
   }
 }
+
+// Initialize the app when DOM is loaded
+document.addEventListener("DOMContentLoaded", init);
