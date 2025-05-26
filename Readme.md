@@ -9,6 +9,7 @@ This document outlines the process of identifying and fixing three critical UX i
 https://github.com/Rohitrky2021/bizz_frontend_project
 
 ## Project Workflow / Architecture
+## Project Workflow / Architecture
 
 ![Project Workflow Schema](assets/Schema.png)
 
@@ -19,6 +20,7 @@ Here's a visual journey through the platform's key interfaces:
 
 ### Login Page
 
+![Login Interface](assets/s1.png)
 ![Login Interface](assets/s1.png)
 ![Login Interface](assets/s2.png)
 ![Login Interface](assets/s3.png)
@@ -50,6 +52,7 @@ The project is structured in a simple and maintainable way using   HTML, CSS, JS
 - **CSS3** – Core styling  
 - **Tailwind CSS** – Utility-first CSS framework  
 - **JavaScript (ES6)** – Frontend logic and interactivity
+
 
 
 ## 1. Identification and Fixing of Top 3 UX Issues
