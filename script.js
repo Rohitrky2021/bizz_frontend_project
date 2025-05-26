@@ -180,6 +180,8 @@ const state = {
   comparison: new Set(),
   maxComparisonItems: 4,
   viewedProducts: [],
+  cart: [],
+  cartVisible: false,
 };
 
 // DOM Elements
@@ -674,6 +676,23 @@ function setupEventListeners() {
     renderProducts(products);
   });
 
+  // Add to your setupEventListeners function
+  document.querySelectorAll(".modal").forEach(modal => {
+    modal.addEventListener("click", e => {
+      if (e.target === modal || e.target.classList.contains("close-modal")) {
+        modal.classList.remove("active");
+
+        // Special handling for wishlist modal
+        if (modal.id === "wishlistModal") {
+          renderProducts(products); // Refresh main grid
+        }
+      }
+    });
+  });
+
+  // Add to your setupEventListeners function
+  elements.wishlistToggle.addEventListener("click", showWishlistModal);
+
   // View Mode Events
   elements.gridView.addEventListener("click", () => {
     state.viewMode = "grid";
@@ -706,6 +725,10 @@ function setupEventListeners() {
 
     if (target.classList.contains("wishlist-btn")) {
       toggleWishlist(productId);
+    } else if (target.classList.contains("remove-wishlist")) {
+      const productId = parseInt(target.dataset.id);
+      toggleWishlist(productId);
+      showWishlistModal(); // Refresh the modal
     } else if (target.classList.contains("compare-button")) {
       toggleComparison(productId);
     } else if (target.classList.contains("quick-view-btn")) {
@@ -749,3 +772,101 @@ function debounce(func, wait) {
 
 // Initialize the app when DOM is loaded
 document.addEventListener("DOMContentLoaded", init);
+
+// Wishlist Functions
+function showWishlistModal() {
+  const modal = document.getElementById("wishlistModal");
+  const container = document.getElementById("wishlistContainer");
+
+  const wishlistProducts = Array.from(state.wishlist).map(id =>
+    products.find(p => p.id === id)
+  );
+
+  if (wishlistProducts.length === 0) {
+    container.innerHTML = `
+            <div class="empty-state">
+                <i class="far fa-heart"></i>
+                <h3>Your wishlist is empty</h3>
+                <p>Add products to your wishlist to see them here</p>
+            </div>
+        `;
+  } else {
+    container.innerHTML = "";
+    wishlistProducts.forEach(product => {
+      container.appendChild(createWishlistItem(product));
+    });
+  }
+
+  modal.classList.add("active");
+}
+
+function createWishlistItem(product) {
+  const item = document.createElement("div");
+  item.className = "wishlist-item";
+  item.innerHTML = `
+        <div class="wishlist-item-image">
+            <img src="${product.image}" alt="${product.title}">
+            <button class="remove-wishlist" data-id="${product.id}">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="wishlist-item-info">
+            <h4>${product.title}</h4>
+            <div class="price">$${product.price.toFixed(2)}</div>
+            <button class="add-to-cart" data-id="${product.id}">
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
+        </div>
+    `;
+  return item;
+}
+
+// Recommendations Functions
+function showRecommendationsModal() {
+  const modal = document.getElementById("recommendationsModal");
+  const container = document.getElementById("recommendationsContainer");
+
+  const recommendations = getRecommendations();
+
+  if (recommendations.length === 0) {
+    container.innerHTML = `
+            <div class="empty-state">
+                <i class="far fa-star"></i>
+                <h3>No recommendations yet</h3>
+                <p>View more products to get personalized recommendations</p>
+            </div>
+        `;
+  } else {
+    container.innerHTML = "";
+    recommendations.forEach(product => {
+      container.appendChild(createProductCard(product));
+    });
+  }
+
+  modal.classList.add("active");
+}
+
+function getRecommendations() {
+  if (state.viewedProducts.length === 0) {
+    return products.slice(0, 4); // Fallback to first 4 products
+  }
+
+  // Simple recommendation logic - products from same category
+  const lastViewed = state.viewedProducts[state.viewedProducts.length - 1];
+  return products
+    .filter(p => p.category === lastViewed.category && p.id !== lastViewed.id)
+    .slice(0, 4);
+}
+
+ 
+// track product views (like in showProductDetails)
+function trackProductView(product) {
+  // Avoid duplicates
+  if (!state.viewedProducts.some(p => p.id === product.id)) {
+    state.viewedProducts.push(product);
+    // Keep only last 5 viewed products
+    if (state.viewedProducts.length > 5) {
+      state.viewedProducts.shift();
+    }
+  }
+}
