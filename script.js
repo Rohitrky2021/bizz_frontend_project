@@ -582,6 +582,7 @@ function initializeChatbot() {
   const chatSubmit = document.getElementById("chatSubmit");
   const chatMessages = document.getElementById("chatMessages");
 
+  // Toggle chatbot modal
   chatbotToggle.addEventListener("click", () => {
     chatbotModal.classList.toggle("active");
     if (chatbotModal.classList.contains("active")) {
@@ -589,41 +590,123 @@ function initializeChatbot() {
     }
   });
 
-  function addChatMessage(text, sender) {
+  // Handle chat submission
+  chatSubmit.addEventListener("click", () => processChatInput());
+  chatInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") processChatInput();
+  });
+
+  function processChatInput() {
+    const query = chatInput.value.trim();
+    if (!query) {
+      addChatMessage("Please enter a query.", "bot");
+      return;
+    }
+
+    addChatMessage(query, "user");
+    const recommendations = getChatRecommendations(query);
+
+    if (recommendations.length) {
+      addChatMessage("Here are some products I recommend:", "bot");
+      recommendations.forEach(product => {
+        addChatMessage(
+          `<div class="chat-product" data-id="${product.id}">
+                        <img src="${product.image}" alt="${product.title}">
+                        <div class="chat-product-info">
+                            <span>${product.title} - $${product.price.toFixed(
+            2
+          )}</span>
+                            <div class="chat-product-actions">
+                                <button class="add-to-cart" data-id="${
+                                  product.id
+                                }">
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                                </button>
+                                <button class="wishlist-btn ${
+                                  state.wishlist.has(product.id) ? "active" : ""
+                                }" data-id="${product.id}">
+                                    <i class="${
+                                      state.wishlist.has(product.id)
+                                        ? "fas"
+                                        : "far"
+                                    } fa-heart"></i>
+                                    ${
+                                      state.wishlist.has(product.id)
+                                        ? "In Wishlist"
+                                        : "Add to Wishlist"
+                                    }
+                                </button>
+                                <button class="quick-view-btn" data-id="${
+                                  product.id
+                                }">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>`,
+          "bot"
+        );
+      });
+    } else {
+      addChatMessage(
+        'Sorry, I couldn’t find any products matching your request. Try something like "electronics under $200" or "books for programming".',
+        "bot"
+      );
+    }
+    chatInput.value = "";
+  }
+
+  function addChatMessage(message, sender) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `chat-message ${sender}`;
-    messageDiv.innerHTML = text;
+    messageDiv.innerHTML = message;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  function processMessage() {
-    const message = chatInput.value.trim();
-    if (!message) return;
+  function getChatRecommendations(query) {
+    const lowerQuery = query.toLowerCase();
+    const priceMatch = lowerQuery.match(/under \$?(\d+)/);
+    const maxPrice = priceMatch ? parseFloat(priceMatch[1]) : Infinity;
+    const categories = ["electronics", "clothing", "books"];
+    const category = categories.find(cat => lowerQuery.includes(cat)) || "all";
+    const keywords = lowerQuery
+      .split(" ")
+      .filter(word => !["under", "for", "a", "in", "show", "me"].includes(word))
+      .map(word => word.replace(/s$/, "")); // Remove plural forms for better matching
 
-    addChatMessage(message, "user");
-    chatInput.value = "";
+    let filteredProducts = products;
 
-    setTimeout(() => {
-      const responses = [
-        "I can help you find products. Try asking about specific categories or price ranges.",
-        "We have great deals on electronics right now. Would you like to see them?",
-        "How can I assist you with your product search today?",
-        "You might like our new arrivals. Shall I show you some recommendations?",
-      ];
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-      addChatMessage(randomResponse, "bot");
-    }, 1000);
+    // Filter by category
+    if (category !== "all") {
+      filteredProducts = filteredProducts.filter(p => p.category === category);
+    }
+
+    // Filter by price
+    filteredProducts = filteredProducts.filter(p => p.price <= maxPrice);
+
+    // Filter by keywords in title or category
+    filteredProducts = filteredProducts.filter(p =>
+      keywords.some(
+        keyword =>
+          p.title.toLowerCase().includes(keyword) ||
+          p.category.toLowerCase().includes(keyword)
+      )
+    );
+
+    // Sort by relevance (rating and price)
+    filteredProducts.sort((a, b) => {
+      const aScore = calculateAverageRating(a.ratings);
+      const bScore = calculateAverageRating(b.ratings);
+      return bScore - aScore || a.price - b.price; // Higher rating first, then lower price
+    });
+
+    return filteredProducts.slice(0, 3); // Return top 3 matches
   }
 
-  chatSubmit.addEventListener("click", processMessage);
-  chatInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") processMessage();
-  });
-
+  // Initial greeting
   addChatMessage(
-    "Hello! I'm your product assistant. How can I help you today?",
+    'Hello! I\'m your shopping assistant. Ask me about products, like "show me electronics under $200" or "programming books".',
     "bot"
   );
 }
