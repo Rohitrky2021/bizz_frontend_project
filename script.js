@@ -180,6 +180,8 @@ const state = {
   comparison: new Set(),
   maxComparisonItems: 4,
   viewedProducts: [],
+  cart: [],
+  cartVisible: false,
 };
 
 // DOM Elements
@@ -199,6 +201,15 @@ const elements = {
   wishlistCount: document.getElementById("wishlistCount"),
   compareFloatBtn: document.getElementById("compareFloatBtn"),
   compareCount: document.getElementById("compareCount"),
+  cartModal: document.getElementById("cartModal"),
+  cartContainer: document.getElementById("cartContainer"),
+  cartSubtotal: document.getElementById("cartSubtotal"),
+  cartShipping: document.getElementById("cartShipping"),
+  cartTotal: document.getElementById("cartTotal"),
+  clearCart: document.getElementById("clearCart"),
+  checkoutBtn: document.getElementById("checkoutBtn"),
+  cartToggle: document.getElementById("cartToggle"), // Make sure you have this in your HTML
+  cartCount: document.getElementById("cartCount"), // Make sure you have this in your HTML
 };
 
 // Initialize Application
@@ -520,6 +531,8 @@ function generateComparisonTable(products) {
 function showProductDetails(product) {
   const modal = document.getElementById("productDetailsModal");
   const container = document.getElementById("productDetailsContainer");
+  console.log("hello");
+  trackProductView(product); // Track product view
 
   container.innerHTML = `
         <div class="product-details-image">
@@ -576,6 +589,7 @@ function showProductDetails(product) {
             </button>
         </div>
     `;
+  console.log(container);
 
   modal.classList.add("active");
 }
@@ -674,6 +688,34 @@ function setupEventListeners() {
     renderProducts(products);
   });
 
+  // Add to your setupEventListeners function
+  document.querySelectorAll(".modal").forEach(modal => {
+    modal.addEventListener("click", e => {
+      if (e.target === modal || e.target.classList.contains("close-modal")) {
+        modal.classList.remove("active");
+
+        // Special handling for wishlist modal
+        if (modal.id === "wishlistModal") {
+          renderProducts(products); // Refresh main grid
+        }
+      }
+    });
+  });
+
+  // Add to your setupEventListeners function
+  elements.wishlistToggle.addEventListener("click", showWishlistModal);
+
+  elements.cartToggle.addEventListener("click", showCartModal);
+  elements.clearCart.addEventListener("click", clearCart);
+  elements.checkoutBtn.addEventListener("click", () => {
+    if (state.cart.length === 0) {
+      showToast("Your cart is empty");
+      return;
+    }
+    showToast("Proceeding to checkout");
+    // Here you would typically redirect to a checkout page
+  });
+
   // View Mode Events
   elements.gridView.addEventListener("click", () => {
     state.viewMode = "grid";
@@ -696,8 +738,17 @@ function setupEventListeners() {
     elements.filters.classList.toggle("active");
   });
 
-  // Product Card Events
-  elements.productGrid.addEventListener("click", e => {
+  // Wishlist Events
+  elements.wishlistToggle.addEventListener("click", showWishlistModal);
+  document
+    .getElementById("clearWishlist")
+    .addEventListener("click", clearWishlist);
+  document
+    .getElementById("shareWishlist")
+    .addEventListener("click", shareWishlist);
+
+  // Product Card Events - Modified to handle modal clicks
+  document.addEventListener("click", e => {
     const target = e.target.closest("[data-id]");
     if (!target) return;
 
@@ -706,13 +757,28 @@ function setupEventListeners() {
 
     if (target.classList.contains("wishlist-btn")) {
       toggleWishlist(productId);
+    } else if (target.classList.contains("remove-wishlist")) {
+      toggleWishlist(productId);
+      showWishlistModal(); // Refresh the modal
     } else if (target.classList.contains("compare-button")) {
       toggleComparison(productId);
     } else if (target.classList.contains("quick-view-btn")) {
       showProductDetails(product);
     } else if (target.classList.contains("add-to-cart")) {
-      // Add to cart functionality would go here
+      // This will now work for both grid and modal add-to-cart buttons
+      addToCart(product);
       showToast(`${product.title} added to cart`);
+    }
+
+    if (e.target.closest(".quantity-increase")) {
+      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
+      updateQuantity(productId, 1);
+    } else if (e.target.closest(".quantity-decrease")) {
+      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
+      updateQuantity(productId, -1);
+    } else if (e.target.closest(".remove-item")) {
+      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
+      removeFromCart(productId);
     }
   });
 
@@ -738,6 +804,32 @@ function setupEventListeners() {
   });
 }
 
+function updateCartUI() {
+  const cartCount = document.getElementById("cartCount");
+  if (cartCount) {
+    cartCount.textContent = state.cart.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+  }
+}
+
+function addToCart(product) {
+  // Check if product already exists in cart
+  const existingItem = state.cart.find(item => item.id === product.id);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    state.cart.push({
+      ...product,
+      quantity: 1,
+    });
+  }
+
+  updateCartUI();
+}
+
 // Utility Functions
 function debounce(func, wait) {
   let timeout;
@@ -749,3 +841,262 @@ function debounce(func, wait) {
 
 // Initialize the app when DOM is loaded
 document.addEventListener("DOMContentLoaded", init);
+
+// Wishlist Functions
+function showWishlistModal() {
+  const modal = document.getElementById("wishlistModal");
+  const container = document.getElementById("wishlistContainer");
+
+  const wishlistProducts = Array.from(state.wishlist).map(id =>
+    products.find(p => p.id === id)
+  );
+
+  if (wishlistProducts.length === 0) {
+    container.innerHTML = `
+            <div class="empty-state">
+                <i class="far fa-heart"></i>
+                <h3>Your wishlist is empty</h3>
+                <p>Add products to your wishlist to see them here</p>
+            </div>
+        `;
+  } else {
+    container.innerHTML = "";
+    wishlistProducts.forEach(product => {
+      container.appendChild(createWishlistItem(product));
+    });
+  }
+
+  modal.classList.add("active");
+}
+
+function createWishlistItem(product) {
+  const item = document.createElement("div");
+  item.className = "wishlist-item";
+  item.innerHTML = `
+        <div class="wishlist-item-image">
+            <img src="${product.image}" alt="${product.title}">
+            <button class="remove-wishlist" data-id="${product.id}">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="wishlist-item-info">
+            <h4>${product.title}</h4>
+            <div class="price">$${product.price.toFixed(2)}</div>
+            <button class="add-to-cart" data-id="${product.id}">
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
+        </div>
+    `;
+  return item;
+}
+
+function clearWishlist() {
+  if (
+    state.wishlist.size === 0 ||
+    !confirm("Are you sure you want to clear your wishlist?")
+  )
+    return;
+  state.wishlist.clear();
+  elements.wishlistCount.textContent = "0";
+  showWishlistModal();
+  showToast("Wishlist cleared");
+}
+
+function shareWishlist() {
+  if (state.wishlist.size === 0) {
+    showToast("Your wishlist is empty");
+    return;
+  }
+
+  const shareData = {
+    title: "My Wishlist",
+    text: `My Wishlist:\n${Array.from(state.wishlist)
+      .map(id => {
+        const p = products.find(p => p.id === id);
+        return `- ${p.title} ($${p.price.toFixed(2)})`;
+      })
+      .join("\n")}`,
+    url: window.location.href,
+  };
+
+  if (navigator.share) {
+    navigator.share(shareData).catch(() => copyToClipboard(shareData.text));
+  } else {
+    copyToClipboard(shareData.text);
+  }
+}
+
+function showCartModal() {
+  renderCartItems();
+  updateCartSummary();
+  elements.cartModal.classList.add("active");
+}
+
+function renderCartItems() {
+  elements.cartContainer.innerHTML = "";
+
+  if (state.cart.length === 0) {
+    elements.cartContainer.innerHTML = `
+      <div class="empty-cart">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Your cart is empty</h3>
+        <p>Add some products to your cart</p>
+      </div>
+    `;
+    return;
+  }
+
+  state.cart.forEach(item => {
+    const cartItem = document.createElement("div");
+    cartItem.className = "cart-item";
+    cartItem.innerHTML = `
+      <div class="cart-item-image">
+        <img src="${item.image}" alt="${item.title}">
+      </div>
+      <div class="cart-item-info">
+        <h4>${item.title}</h4>
+        <div class="price">$${item.price.toFixed(2)}</div>
+        <div class="quantity-controls">
+          <button class="quantity-decrease" data-id="${item.id}">
+            <i class="fas fa-minus"></i>
+          </button>
+          <span class="quantity">${item.quantity}</span>
+          <button class="quantity-increase" data-id="${item.id}">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="cart-item-actions">
+        <button class="remove-item" data-id="${item.id}">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="item-total">
+          $${(item.price * item.quantity).toFixed(2)}
+        </div>
+      </div>
+    `;
+    elements.cartContainer.appendChild(cartItem);
+  });
+}
+
+function updateCartSummary() {
+  const subtotal = state.cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const shipping = subtotal > 100 ? 0 : 9.99; // Free shipping over $100
+  const total = subtotal + shipping;
+
+  elements.cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+  elements.cartShipping.textContent = `$${shipping.toFixed(2)}`;
+  elements.cartTotal.textContent = `$${total.toFixed(2)}`;
+}
+
+function updateCartCount() {
+  const count = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  elements.cartCount.textContent = count;
+}
+
+function addToCart(product) {
+  const existingItem = state.cart.find(item => item.id === product.id);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    state.cart.push({
+      ...product,
+      quantity: 1,
+    });
+  }
+
+  updateCartCount();
+  showToast(`${product.title} added to cart`);
+}
+
+function removeFromCart(productId) {
+  state.cart = state.cart.filter(item => item.id !== productId);
+  updateCartCount();
+  if (elements.cartModal.classList.contains("active")) {
+    renderCartItems();
+    updateCartSummary();
+  }
+}
+
+function updateQuantity(productId, change) {
+  const item = state.cart.find(item => item.id === productId);
+  if (!item) return;
+
+  item.quantity += change;
+
+  if (item.quantity < 1) {
+    removeFromCart(productId);
+  } else {
+    updateCartCount();
+    if (elements.cartModal.classList.contains("active")) {
+      renderCartItems();
+      updateCartSummary();
+    }
+  }
+}
+
+function clearCart() {
+  if (
+    state.cart.length === 0 ||
+    !confirm("Are you sure you want to clear your cart?")
+  )
+    return;
+  state.cart = [];
+  updateCartCount();
+  renderCartItems();
+  updateCartSummary();
+  showToast("Cart cleared");
+}
+
+// Recommendations Functions
+function showRecommendationsModal() {
+  const modal = document.getElementById("recommendationsModal");
+  const container = document.getElementById("recommendationsContainer");
+
+  const recommendations = getRecommendations();
+
+  if (recommendations.length === 0) {
+    container.innerHTML = `
+            <div class="empty-state">
+                <i class="far fa-star"></i>
+                <h3>No recommendations yet</h3>
+                <p>View more products to get personalized recommendations</p>
+            </div>
+        `;
+  } else {
+    container.innerHTML = "";
+    recommendations.forEach(product => {
+      container.appendChild(createProductCard(product));
+    });
+  }
+
+  modal.classList.add("active");
+}
+
+function getRecommendations() {
+  if (state.viewedProducts.length === 0) {
+    return products.slice(0, 4); // Fallback to first 4 products
+  }
+
+  // Simple recommendation logic - products from same category
+  const lastViewed = state.viewedProducts[state.viewedProducts.length - 1];
+  return products
+    .filter(p => p.category === lastViewed.category && p.id !== lastViewed.id)
+    .slice(0, 4);
+}
+
+// track product views (like in showProductDetails)
+function trackProductView(product) {
+  // Avoid duplicates
+  if (!state.viewedProducts.some(p => p.id === product.id)) {
+    state.viewedProducts.push(product);
+    // Keep only last 5 viewed products
+    if (state.viewedProducts.length > 5) {
+      state.viewedProducts.shift();
+    }
+  }
+}

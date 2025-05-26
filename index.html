@@ -89,6 +89,11 @@
         <button id="mobileFilterToggle" class="mobile-filter-toggle" data-testid="mobile-filter-toggle">
             <i class="fas fa-sliders-h"></i> Filters
         </button>
+              <button id="cartToggle" class="cart-float-btn" data-testid="cart-toggle">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cartCount">0</span>
+        </button>
+
         <button id="chatbotToggle" class="mobile-filter-toggle" data-testid="chatbot-toggle">
             <i class="fas fa-comment"></i> Chat with Assistant
         </button>
@@ -132,6 +137,44 @@
                 <button class="close-modal">Close</button>
             </div>
         </div>
+
+        <!-- Cart Modal -->
+        <div id="cartModal" class="modal" data-testid="cart-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-shopping-cart"></i> My Cart</h2>
+                    <div class="cart-actions">
+                        <button id="clearCart" class="btn-outline">
+                            <i class="fas fa-trash-alt"></i> Clear All
+                        </button>
+                        <button id="checkoutBtn" class="btn-primary">
+                            <i class="fas fa-credit-card"></i> Checkout
+                        </button>
+                    </div>
+                </div>
+                <div id="cartContainer" class="cart-grid">
+                    <!-- Cart items will be displayed here -->
+                </div>
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="cartSubtotal">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping:</span>
+                        <span id="cartShipping">$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="cartTotal">$0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="close-modal">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+
 
         <div id="wishlistModal" class="modal" data-testid="wishlist-modal">
             <div class="modal-content">

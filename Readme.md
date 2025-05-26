@@ -3,11 +3,12 @@
 This document outlines the process of identifying and fixing three critical UX issues in the provided Product Gallery implementation, implementing an innovative out-of-the-box feature, and adding two additional features to enhance the user experience. Each section includes how issues were identified, why they are problematic, the solution approach, and detailed implementation steps.
 
 **Live Site**  
-[Advanced Product Gallery](https://rohitrky2021.github.io/bizz_frontend_project/)
+[Advanced Product Gallery]([https://rohitrky2021.github.io/bizz_frontend_project](https://bizz-frontend-project.vercel.app/)
 
 **Repo Link**  
 https://github.com/Rohitrky2021/bizz_frontend_project
 
+## Project Workflow / Architecture
 ## Project Workflow / Architecture
 
 ![Project Workflow Schema](assets/Schema.png)
@@ -19,6 +20,7 @@ Here's a visual journey through the platform's key interfaces:
 
 ### Login Page
 
+![Login Interface](assets/s1.png)
 ![Login Interface](assets/s1.png)
 ![Login Interface](assets/s2.png)
 ![Login Interface](assets/s3.png)
