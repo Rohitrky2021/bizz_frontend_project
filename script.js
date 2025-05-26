@@ -173,6 +173,8 @@ const state = {
     category: "all",
     search: "",
     priceRange: 1500,
+    rating: 0,
+    stock: "all",
     sortBy: "price",
     sortOrder: "asc",
   },
@@ -183,6 +185,11 @@ const state = {
   viewedProducts: [],
   cart: [],
   cartVisible: false,
+  pagination: {
+    currentPage: 1,
+    itemsPerPage: 12,
+    totalItems: products.length,
+  },
 };
 
 // DOM Elements
@@ -229,15 +236,27 @@ function renderProducts(productsToRender) {
   const filteredProducts = filterProducts(productsToRender);
   const sortedProducts = sortProducts(filteredProducts);
 
-  if (sortedProducts.length === 0) {
+  // Update totalItems in state
+  state.pagination.totalItems = sortedProducts.length;
+
+  // Paginate products
+  const { items: paginatedProducts, totalPages } = paginateProducts(
+    sortedProducts,
+    state.pagination
+  );
+
+  if (paginatedProducts.length === 0) {
     elements.productGrid.innerHTML =
       '<div class="no-results">No products match your filters</div>';
     return;
   }
 
-  sortedProducts.forEach(product => {
+  paginatedProducts.forEach(product => {
     elements.productGrid.appendChild(createProductCard(product));
   });
+
+  // Update pagination UI
+  updatePaginationUI(totalPages);
 }
 
 // Create Product Card
@@ -313,6 +332,15 @@ function filterProducts(products) {
     return matchesCategory && matchesSearch && matchesPrice;
   });
 }
+
+const paginateProducts = (products, pagination) => {
+  const start = (pagination.currentPage - 1) * pagination.itemsPerPage;
+  const end = start + pagination.itemsPerPage;
+  return {
+    items: products.slice(start, end),
+    totalPages: Math.ceil(products.length / pagination.itemsPerPage),
+  };
+};
 
 // Sort Products
 function sortProducts(products) {
@@ -713,27 +741,51 @@ function initializeChatbot() {
 
 // Event Listeners
 function setupEventListeners() {
+  // Debounced search
+  const debouncedSearch = debounce(value => {
+    state.filters.search = value;
+    state.pagination.currentPage = 1; // Reset to first page on search
+    renderProducts(products);
+  }, 300);
+
+  // Throttled scroll for infinite loading
+  const throttledScroll = throttle(() => {
+    const scrollPosition = window.scrollY + window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    if (scrollPosition >= documentHeight - 100) {
+      const totalPages = Math.ceil(
+        state.pagination.totalItems / state.pagination.itemsPerPage
+      );
+      if (state.pagination.currentPage < totalPages) {
+        state.pagination.currentPage += 1;
+        renderProducts(products);
+      }
+    }
+  }, 200);
+
+  // Filter Events
   elements.categoryFilter.addEventListener("change", () => {
     state.filters.category = elements.categoryFilter.value;
+    state.pagination.currentPage = 1; // Reset to first page
     renderProducts(products);
   });
 
-  elements.searchInput.addEventListener(
-    "input",
-    debounce(() => {
-      state.filters.search = elements.searchInput.value.trim().toLowerCase();
-      renderProducts(products);
-    }, 300)
-  );
+  elements.searchInput.addEventListener("input", () => {
+    debouncedSearch(elements.searchInput.value.trim().toLowerCase());
+  });
 
   elements.priceRange.addEventListener("input", () => {
     state.filters.priceRange = parseFloat(elements.priceRange.value);
     updatePriceDisplay();
+    state.pagination.currentPage = 1; // Reset to first page
     renderProducts(products);
   });
 
+  // Sort Events
   elements.sortBy.addEventListener("change", () => {
     state.filters.sortBy = elements.sortBy.value;
+    state.pagination.currentPage = 1; // Reset to first page
     renderProducts(products);
   });
 
@@ -744,22 +796,32 @@ function setupEventListeners() {
       state.filters.sortOrder === "asc"
         ? "fas fa-sort-amount-down"
         : "fas fa-sort-amount-up";
+    state.pagination.currentPage = 1; // Reset to first page
     renderProducts(products);
   });
 
+  // Modal Close Events
   document.querySelectorAll(".modal").forEach(modal => {
     modal.addEventListener("click", e => {
       if (e.target === modal || e.target.classList.contains("close-modal")) {
         modal.classList.remove("active");
-
         if (modal.id === "wishlistModal") {
-          renderProducts(products);
+          renderProducts(products); // Refresh main grid
         }
       }
     });
   });
 
+  // Wishlist Events
   elements.wishlistToggle.addEventListener("click", showWishlistModal);
+  document
+    .getElementById("clearWishlist")
+    .addEventListener("click", clearWishlist);
+  document
+    .getElementById("shareWishlist")
+    .addEventListener("click", shareWishlist);
+
+  // Cart Events
   elements.cartToggle.addEventListener("click", showCartModal);
   elements.clearCart.addEventListener("click", clearCart);
   elements.checkoutBtn.addEventListener("click", () => {
@@ -770,12 +832,14 @@ function setupEventListeners() {
     showToast("Proceeding to checkout");
   });
 
+  // View Mode Events
   elements.gridView.addEventListener("click", () => {
     state.viewMode = "grid";
     elements.gridView.classList.add("active");
     elements.listView.classList.remove("active");
     elements.productGrid.classList.remove("list-view");
     elements.productGrid.classList.add("grid-view");
+    renderProducts(products);
   });
 
   elements.listView.addEventListener("click", () => {
@@ -784,20 +848,15 @@ function setupEventListeners() {
     elements.gridView.classList.remove("active");
     elements.productGrid.classList.remove("grid-view");
     elements.productGrid.classList.add("list-view");
+    renderProducts(products);
   });
 
+  // Mobile Filter Toggle
   elements.mobileFilterToggle.addEventListener("click", () => {
     elements.filters.classList.toggle("active");
   });
 
-  elements.wishlistToggle.addEventListener("click", showWishlistModal);
-  document
-    .getElementById("clearWishlist")
-    .addEventListener("click", clearWishlist);
-  document
-    .getElementById("shareWishlist")
-    .addEventListener("click", shareWishlist);
-
+  // Product Card Events
   document.addEventListener("click", e => {
     const target = e.target.closest("[data-id]");
     if (!target) return;
@@ -809,7 +868,7 @@ function setupEventListeners() {
       toggleWishlist(productId);
     } else if (target.classList.contains("remove-wishlist")) {
       toggleWishlist(productId);
-      showWishlistModal();
+      showWishlistModal(); // Refresh the modal
     } else if (target.classList.contains("compare-button")) {
       toggleComparison(productId);
     } else if (target.classList.contains("quick-view-btn")) {
@@ -820,27 +879,21 @@ function setupEventListeners() {
     }
 
     if (e.target.closest(".quantity-increase")) {
-      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
       updateQuantity(productId, 1);
     } else if (e.target.closest(".quantity-decrease")) {
-      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
       updateQuantity(productId, -1);
     } else if (e.target.closest(".remove-item")) {
-      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
       removeFromCart(productId);
     }
   });
 
+  // Compare Float Button
   elements.compareFloatBtn.addEventListener("click", showComparisonModal);
 
-  document.querySelectorAll(".modal").forEach(modal => {
-    modal.addEventListener("click", e => {
-      if (e.target === modal || e.target.classList.contains("close-modal")) {
-        modal.classList.remove("active");
-      }
-    });
-  });
+  // Scroll Event for Infinite Loading
+  window.addEventListener("scroll", throttledScroll);
 
+  // Close Modals with ESC
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
       document.querySelectorAll(".modal.active").forEach(modal => {
@@ -848,6 +901,40 @@ function setupEventListeners() {
       });
     }
   });
+}
+
+function updatePaginationUI(totalPages) {
+  const paginationContainer = document.getElementById("paginationContainer");
+  if (!paginationContainer) return;
+
+  paginationContainer.innerHTML = "";
+
+  // Add "Load More" button if not on the last page
+  if (state.pagination.currentPage < totalPages) {
+    const loadMoreBtn = document.createElement("button");
+    loadMoreBtn.className = "load-more-btn";
+    loadMoreBtn.textContent = "Load More";
+    loadMoreBtn.addEventListener("click", () => {
+      state.pagination.currentPage += 1;
+      renderProducts(products);
+    });
+    paginationContainer.appendChild(loadMoreBtn);
+  }
+
+  // Optionally, add page numbers
+  const pageNumbers = document.createElement("div");
+  pageNumbers.className = "page-numbers";
+  for (let i = 1; i <= totalPages; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.classList.toggle("active", i === state.pagination.currentPage);
+    pageBtn.addEventListener("click", () => {
+      state.pagination.currentPage = i;
+      renderProducts(products);
+    });
+    pageNumbers.appendChild(pageBtn);
+  }
+  paginationContainer.appendChild(pageNumbers);
 }
 
 function updateCartUI() {
@@ -881,6 +968,18 @@ function debounce(func, wait) {
   return function (...args) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+// Throttle function
+function throttle(func, limit) {
+  let inThrottle;
+  return function (...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
   };
 }
 
