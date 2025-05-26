@@ -201,6 +201,15 @@ const elements = {
   wishlistCount: document.getElementById("wishlistCount"),
   compareFloatBtn: document.getElementById("compareFloatBtn"),
   compareCount: document.getElementById("compareCount"),
+  cartModal: document.getElementById("cartModal"),
+  cartContainer: document.getElementById("cartContainer"),
+  cartSubtotal: document.getElementById("cartSubtotal"),
+  cartShipping: document.getElementById("cartShipping"),
+  cartTotal: document.getElementById("cartTotal"),
+  clearCart: document.getElementById("clearCart"),
+  checkoutBtn: document.getElementById("checkoutBtn"),
+  cartToggle: document.getElementById("cartToggle"), // Make sure you have this in your HTML
+  cartCount: document.getElementById("cartCount"), // Make sure you have this in your HTML
 };
 
 // Initialize Application
@@ -522,6 +531,8 @@ function generateComparisonTable(products) {
 function showProductDetails(product) {
   const modal = document.getElementById("productDetailsModal");
   const container = document.getElementById("productDetailsContainer");
+  console.log("hello");
+  trackProductView(product); // Track product view
 
   container.innerHTML = `
         <div class="product-details-image">
@@ -578,6 +589,7 @@ function showProductDetails(product) {
             </button>
         </div>
     `;
+  console.log(container);
 
   modal.classList.add("active");
 }
@@ -693,6 +705,17 @@ function setupEventListeners() {
   // Add to your setupEventListeners function
   elements.wishlistToggle.addEventListener("click", showWishlistModal);
 
+  elements.cartToggle.addEventListener("click", showCartModal);
+  elements.clearCart.addEventListener("click", clearCart);
+  elements.checkoutBtn.addEventListener("click", () => {
+    if (state.cart.length === 0) {
+      showToast("Your cart is empty");
+      return;
+    }
+    showToast("Proceeding to checkout");
+    // Here you would typically redirect to a checkout page
+  });
+
   // View Mode Events
   elements.gridView.addEventListener("click", () => {
     state.viewMode = "grid";
@@ -716,13 +739,16 @@ function setupEventListeners() {
   });
 
   // Wishlist Events
-  elements.wishlistToggle.addEventListener('click', showWishlistModal);
-  document.getElementById('clearWishlist').addEventListener('click', clearWishlist);
-  document.getElementById('shareWishlist').addEventListener('click', shareWishlist);
-  
+  elements.wishlistToggle.addEventListener("click", showWishlistModal);
+  document
+    .getElementById("clearWishlist")
+    .addEventListener("click", clearWishlist);
+  document
+    .getElementById("shareWishlist")
+    .addEventListener("click", shareWishlist);
 
-  // Product Card Events
-  elements.productGrid.addEventListener("click", e => {
+  // Product Card Events - Modified to handle modal clicks
+  document.addEventListener("click", e => {
     const target = e.target.closest("[data-id]");
     if (!target) return;
 
@@ -732,7 +758,6 @@ function setupEventListeners() {
     if (target.classList.contains("wishlist-btn")) {
       toggleWishlist(productId);
     } else if (target.classList.contains("remove-wishlist")) {
-      const productId = parseInt(target.dataset.id);
       toggleWishlist(productId);
       showWishlistModal(); // Refresh the modal
     } else if (target.classList.contains("compare-button")) {
@@ -740,8 +765,20 @@ function setupEventListeners() {
     } else if (target.classList.contains("quick-view-btn")) {
       showProductDetails(product);
     } else if (target.classList.contains("add-to-cart")) {
-      // Add to cart functionality would go here
+      // This will now work for both grid and modal add-to-cart buttons
+      addToCart(product);
       showToast(`${product.title} added to cart`);
+    }
+
+    if (e.target.closest(".quantity-increase")) {
+      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
+      updateQuantity(productId, 1);
+    } else if (e.target.closest(".quantity-decrease")) {
+      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
+      updateQuantity(productId, -1);
+    } else if (e.target.closest(".remove-item")) {
+      const productId = parseInt(e.target.closest("[data-id]").dataset.id);
+      removeFromCart(productId);
     }
   });
 
@@ -765,6 +802,32 @@ function setupEventListeners() {
       });
     }
   });
+}
+
+function updateCartUI() {
+  const cartCount = document.getElementById("cartCount");
+  if (cartCount) {
+    cartCount.textContent = state.cart.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+  }
+}
+
+function addToCart(product) {
+  // Check if product already exists in cart
+  const existingItem = state.cart.find(item => item.id === product.id);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    state.cart.push({
+      ...product,
+      quantity: 1,
+    });
+  }
+
+  updateCartUI();
 }
 
 // Utility Functions
@@ -828,27 +891,32 @@ function createWishlistItem(product) {
 }
 
 function clearWishlist() {
-  if (state.wishlist.size === 0 || !confirm('Are you sure you want to clear your wishlist?')) return;
+  if (
+    state.wishlist.size === 0 ||
+    !confirm("Are you sure you want to clear your wishlist?")
+  )
+    return;
   state.wishlist.clear();
-  elements.wishlistCount.textContent = '0';
+  elements.wishlistCount.textContent = "0";
   showWishlistModal();
-  showToast('Wishlist cleared');
+  showToast("Wishlist cleared");
 }
 
 function shareWishlist() {
   if (state.wishlist.size === 0) {
-    showToast('Your wishlist is empty');
+    showToast("Your wishlist is empty");
     return;
   }
-  
+
   const shareData = {
-    title: 'My Wishlist',
+    title: "My Wishlist",
     text: `My Wishlist:\n${Array.from(state.wishlist)
       .map(id => {
         const p = products.find(p => p.id === id);
         return `- ${p.title} ($${p.price.toFixed(2)})`;
-      }).join('\n')}`,
-    url: window.location.href
+      })
+      .join("\n")}`,
+    url: window.location.href,
   };
 
   if (navigator.share) {
@@ -858,6 +926,131 @@ function shareWishlist() {
   }
 }
 
+function showCartModal() {
+  renderCartItems();
+  updateCartSummary();
+  elements.cartModal.classList.add("active");
+}
+
+function renderCartItems() {
+  elements.cartContainer.innerHTML = "";
+
+  if (state.cart.length === 0) {
+    elements.cartContainer.innerHTML = `
+      <div class="empty-cart">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Your cart is empty</h3>
+        <p>Add some products to your cart</p>
+      </div>
+    `;
+    return;
+  }
+
+  state.cart.forEach(item => {
+    const cartItem = document.createElement("div");
+    cartItem.className = "cart-item";
+    cartItem.innerHTML = `
+      <div class="cart-item-image">
+        <img src="${item.image}" alt="${item.title}">
+      </div>
+      <div class="cart-item-info">
+        <h4>${item.title}</h4>
+        <div class="price">$${item.price.toFixed(2)}</div>
+        <div class="quantity-controls">
+          <button class="quantity-decrease" data-id="${item.id}">
+            <i class="fas fa-minus"></i>
+          </button>
+          <span class="quantity">${item.quantity}</span>
+          <button class="quantity-increase" data-id="${item.id}">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="cart-item-actions">
+        <button class="remove-item" data-id="${item.id}">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="item-total">
+          $${(item.price * item.quantity).toFixed(2)}
+        </div>
+      </div>
+    `;
+    elements.cartContainer.appendChild(cartItem);
+  });
+}
+
+function updateCartSummary() {
+  const subtotal = state.cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const shipping = subtotal > 100 ? 0 : 9.99; // Free shipping over $100
+  const total = subtotal + shipping;
+
+  elements.cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+  elements.cartShipping.textContent = `$${shipping.toFixed(2)}`;
+  elements.cartTotal.textContent = `$${total.toFixed(2)}`;
+}
+
+function updateCartCount() {
+  const count = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  elements.cartCount.textContent = count;
+}
+
+function addToCart(product) {
+  const existingItem = state.cart.find(item => item.id === product.id);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    state.cart.push({
+      ...product,
+      quantity: 1,
+    });
+  }
+
+  updateCartCount();
+  showToast(`${product.title} added to cart`);
+}
+
+function removeFromCart(productId) {
+  state.cart = state.cart.filter(item => item.id !== productId);
+  updateCartCount();
+  if (elements.cartModal.classList.contains("active")) {
+    renderCartItems();
+    updateCartSummary();
+  }
+}
+
+function updateQuantity(productId, change) {
+  const item = state.cart.find(item => item.id === productId);
+  if (!item) return;
+
+  item.quantity += change;
+
+  if (item.quantity < 1) {
+    removeFromCart(productId);
+  } else {
+    updateCartCount();
+    if (elements.cartModal.classList.contains("active")) {
+      renderCartItems();
+      updateCartSummary();
+    }
+  }
+}
+
+function clearCart() {
+  if (
+    state.cart.length === 0 ||
+    !confirm("Are you sure you want to clear your cart?")
+  )
+    return;
+  state.cart = [];
+  updateCartCount();
+  renderCartItems();
+  updateCartSummary();
+  showToast("Cart cleared");
+}
 
 // Recommendations Functions
 function showRecommendationsModal() {
@@ -896,7 +1089,6 @@ function getRecommendations() {
     .slice(0, 4);
 }
 
- 
 // track product views (like in showProductDetails)
 function trackProductView(product) {
   // Avoid duplicates
